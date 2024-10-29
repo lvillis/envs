@@ -1,7 +1,7 @@
 [package]
 name = "envs"
-description = "todo"
-version = "0.1.0"
+description = "A Rust Library for Environment Detection."
+version = "0.1.1"
 edition = "2021"
 license = "MIT"
 
