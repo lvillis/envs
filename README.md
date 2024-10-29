@@ -2,7 +2,7 @@
 
 <h1 align=center><code>envs</code></h1>
 
-<p align=center>  </p>
+<p align=center>📦 A Rust Library for Environment Detection.</p>
 
 <div align=center>
   <a href="https://crates.io/crates/envs">
@@ -20,3 +20,13 @@
 </div>
 
 ---
+
+## Usage
+
+Add this to your `Cargo.toml`:
+
+```toml
+[dependencies]
+envs = "0.1.0"
+```
+    
