@@ -1,3 +1,4 @@
+use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -50,12 +51,57 @@ pub enum VirtualizationPlatform {
     None,
 }
 
+/// Enum representing specific capabilities.
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub enum Capability {
+    CAP_CHOWN,
+    CAP_DAC_OVERRIDE,
+    CAP_DAC_READ_SEARCH,
+    CAP_FOWNER,
+    CAP_FSETID,
+    CAP_KILL,
+    CAP_SETGID,
+    CAP_SETUID,
+    CAP_SETPCAP,
+    CAP_LINUX_IMMUTABLE,
+    CAP_NET_BIND_SERVICE,
+    CAP_NET_BROADCAST,
+    CAP_NET_ADMIN,
+    CAP_NET_RAW,
+    CAP_IPC_LOCK,
+    CAP_IPC_OWNER,
+    CAP_SYS_MODULE,
+    CAP_SYS_RAWIO,
+    CAP_SYS_CHROOT,
+    CAP_SYS_PTRACE,
+    CAP_SYS_PACCT,
+    CAP_SYS_ADMIN,
+    CAP_SYS_BOOT,
+    CAP_SYS_NICE,
+    CAP_SYS_RESOURCE,
+    CAP_SYS_TIME,
+    CAP_SYS_TTY_CONFIG,
+    CAP_MKNOD,
+    CAP_LEASE,
+    CAP_AUDIT_WRITE,
+    CAP_AUDIT_CONTROL,
+    CAP_SETFCAP,
+    Unknown(String),
+}
+
+/// Struct holding the detected capabilities.
+#[derive(Debug, PartialEq, Eq)]
+pub struct Capabilities {
+    pub effective: HashSet<Capability>,
+}
+
 /// Struct holding the environment information.
 #[derive(Debug, PartialEq, Eq)]
 pub struct EnvironmentInfo {
     pub os: OperatingSystem,
     pub container: ContainerEnvironment,
     pub virtualization: VirtualizationPlatform,
+    pub capabilities: Option<Capabilities>,
 }
 
 /// Retrieves the current operating system.
@@ -116,6 +162,130 @@ pub fn detect_container(fs: &dyn FileSystem) -> ContainerEnvironment {
     ContainerEnvironment::None
 }
 
+/// Maps capability names to their respective bit positions.
+fn get_capability_map() -> HashMap<&'static str, u32> {
+    let mut map = HashMap::new();
+    map.insert("CAP_CHOWN", 0);
+    map.insert("CAP_DAC_OVERRIDE", 1);
+    map.insert("CAP_DAC_READ_SEARCH", 2);
+    map.insert("CAP_FOWNER", 3);
+    map.insert("CAP_FSETID", 4);
+    map.insert("CAP_KILL", 5);
+    map.insert("CAP_SETGID", 6);
+    map.insert("CAP_SETUID", 7);
+    map.insert("CAP_SETPCAP", 8);
+    map.insert("CAP_LINUX_IMMUTABLE", 9);
+    map.insert("CAP_NET_BIND_SERVICE", 10);
+    map.insert("CAP_NET_BROADCAST", 11);
+    map.insert("CAP_NET_ADMIN", 12);
+    map.insert("CAP_NET_RAW", 13);
+    map.insert("CAP_IPC_LOCK", 14);
+    map.insert("CAP_IPC_OWNER", 15);
+    map.insert("CAP_SYS_MODULE", 16);
+    map.insert("CAP_SYS_RAWIO", 17);
+    map.insert("CAP_SYS_CHROOT", 18);
+    map.insert("CAP_SYS_PTRACE", 19);
+    map.insert("CAP_SYS_PACCT", 20);
+    map.insert("CAP_SYS_ADMIN", 21);
+    map.insert("CAP_SYS_BOOT", 22);
+    map.insert("CAP_SYS_NICE", 23);
+    map.insert("CAP_SYS_RESOURCE", 24);
+    map.insert("CAP_SYS_TIME", 25);
+    map.insert("CAP_SYS_TTY_CONFIG", 26);
+    map.insert("CAP_MKNOD", 27);
+    map.insert("CAP_LEASE", 28);
+    map.insert("CAP_AUDIT_WRITE", 29);
+    map.insert("CAP_AUDIT_CONTROL", 30);
+    map.insert("CAP_SETFCAP", 31);
+    map
+}
+
+/// Parses the CapEff value and returns a list of enabled capabilities.
+fn parse_capabilities(cap_eff: u64) -> Vec<Capability> {
+    let capability_map = get_capability_map();
+    capability_map
+        .iter()
+        .filter_map(|(&cap, &bit)| {
+            if cap_eff & (1 << bit) != 0 {
+                match cap {
+                    "CAP_CHOWN" => Some(Capability::CAP_CHOWN),
+                    "CAP_DAC_OVERRIDE" => Some(Capability::CAP_DAC_OVERRIDE),
+                    "CAP_DAC_READ_SEARCH" => Some(Capability::CAP_DAC_READ_SEARCH),
+                    "CAP_FOWNER" => Some(Capability::CAP_FOWNER),
+                    "CAP_FSETID" => Some(Capability::CAP_FSETID),
+                    "CAP_KILL" => Some(Capability::CAP_KILL),
+                    "CAP_SETGID" => Some(Capability::CAP_SETGID),
+                    "CAP_SETUID" => Some(Capability::CAP_SETUID),
+                    "CAP_SETPCAP" => Some(Capability::CAP_SETPCAP),
+                    "CAP_LINUX_IMMUTABLE" => Some(Capability::CAP_LINUX_IMMUTABLE),
+                    "CAP_NET_BIND_SERVICE" => Some(Capability::CAP_NET_BIND_SERVICE),
+                    "CAP_NET_BROADCAST" => Some(Capability::CAP_NET_BROADCAST),
+                    "CAP_NET_ADMIN" => Some(Capability::CAP_NET_ADMIN),
+                    "CAP_NET_RAW" => Some(Capability::CAP_NET_RAW),
+                    "CAP_IPC_LOCK" => Some(Capability::CAP_IPC_LOCK),
+                    "CAP_IPC_OWNER" => Some(Capability::CAP_IPC_OWNER),
+                    "CAP_SYS_MODULE" => Some(Capability::CAP_SYS_MODULE),
+                    "CAP_SYS_RAWIO" => Some(Capability::CAP_SYS_RAWIO),
+                    "CAP_SYS_CHROOT" => Some(Capability::CAP_SYS_CHROOT),
+                    "CAP_SYS_PTRACE" => Some(Capability::CAP_SYS_PTRACE),
+                    "CAP_SYS_PACCT" => Some(Capability::CAP_SYS_PACCT),
+                    "CAP_SYS_ADMIN" => Some(Capability::CAP_SYS_ADMIN),
+                    "CAP_SYS_BOOT" => Some(Capability::CAP_SYS_BOOT),
+                    "CAP_SYS_NICE" => Some(Capability::CAP_SYS_NICE),
+                    "CAP_SYS_RESOURCE" => Some(Capability::CAP_SYS_RESOURCE),
+                    "CAP_SYS_TIME" => Some(Capability::CAP_SYS_TIME),
+                    "CAP_SYS_TTY_CONFIG" => Some(Capability::CAP_SYS_TTY_CONFIG),
+                    "CAP_MKNOD" => Some(Capability::CAP_MKNOD),
+                    "CAP_LEASE" => Some(Capability::CAP_LEASE),
+                    "CAP_AUDIT_WRITE" => Some(Capability::CAP_AUDIT_WRITE),
+                    "CAP_AUDIT_CONTROL" => Some(Capability::CAP_AUDIT_CONTROL),
+                    "CAP_SETFCAP" => Some(Capability::CAP_SETFCAP),
+                    _ => Some(Capability::Unknown(cap.to_string())),
+                }
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+/// Reads and parses the CapEff field from /proc/self/status to determine effective capabilities.
+fn get_capabilities(fs: &dyn FileSystem) -> Option<Capabilities> {
+    let status_path = Path::new("/proc/self/status");
+    if !fs.file_exists(status_path) {
+        return None;
+    }
+
+    let status_content = match fs.read_to_string(status_path) {
+        Ok(content) => content,
+        Err(_) => return None,
+    };
+
+    // Find the CapEff line
+    let cap_eff_line = status_content
+        .lines()
+        .find(|line| line.starts_with("CapEff:"))
+        .map(|line| line.trim_start_matches("CapEff:").trim());
+
+    let cap_eff_str = match cap_eff_line {
+        Some(s) => s,
+        None => return None,
+    };
+
+    // Parse the hexadecimal CapEff value
+    let cap_eff = match u64::from_str_radix(cap_eff_str, 16) {
+        Ok(val) => val,
+        Err(_) => return None,
+    };
+
+    // Parse capabilities using the provided parse_capabilities function
+    let capabilities = parse_capabilities(cap_eff);
+
+    Some(Capabilities {
+        effective: capabilities.into_iter().collect(),
+    })
+}
+
 /// Detects the current virtualization platform using the provided `FileSystem`.
 pub fn detect_virtualization(fs: &dyn FileSystem) -> VirtualizationPlatform {
     // If running inside a container, skip virtualization detection
@@ -166,10 +336,17 @@ pub fn detect_virtualization(fs: &dyn FileSystem) -> VirtualizationPlatform {
 /// Retrieves the complete environment information using the real filesystem.
 pub fn get_environment_info() -> EnvironmentInfo {
     let fs = RealFileSystem;
+    let container = detect_container(&fs);
+    let capabilities = if container == ContainerEnvironment::Docker {
+        get_capabilities(&fs)
+    } else {
+        None
+    };
     EnvironmentInfo {
         os: get_os(),
-        container: detect_container(&fs),
+        container,
         virtualization: detect_virtualization(&fs),
+        capabilities,
     }
 }
 
@@ -390,6 +567,7 @@ mod tests {
         assert_eq!(info.os, OperatingSystem::MacOS);
         assert_eq!(info.container, ContainerEnvironment::Kubernetes);
         assert_eq!(info.virtualization, VirtualizationPlatform::None);
+        assert_eq!(info.capabilities, None);
         env::remove_var("KUBERNETES_SERVICE_HOST");
     }
 
@@ -406,6 +584,27 @@ mod tests {
         assert_eq!(info.os, OperatingSystem::Linux);
         assert_eq!(info.container, ContainerEnvironment::None);
         assert_eq!(info.virtualization, VirtualizationPlatform::VMware);
+        assert_eq!(info.capabilities, None);
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn test_get_environment_info_capabilities() {
+        let mut mock_fs = MockFileSystem::new();
+        // Simulate Docker environment
+        mock_fs.add_file(PathBuf::from("/.dockerenv"), "".to_string());
+        // Simulate CapEff in /proc/self/status (e.g., CapEff=00000000002c0000)
+        mock_fs.add_file(PathBuf::from("/proc/self/status"), "CapEff: 00000000002c0000\n".to_string());
+
+        let capabilities = get_capabilities(&mock_fs).unwrap();
+        let expected: HashSet<Capability> = vec![
+            Capability::CAP_SYS_ADMIN,
+            Capability::CAP_SYS_PTRACE,
+            Capability::CAP_SYS_CHROOT,
+        ]
+            .into_iter()
+            .collect();
+        assert_eq!(capabilities.effective, expected);
     }
 
     /// Helper function to get environment info using a specific `FileSystem` implementation.
@@ -414,6 +613,11 @@ mod tests {
             os: get_os(),
             container: detect_container(fs),
             virtualization: detect_virtualization(fs),
+            capabilities: if detect_container(fs) == ContainerEnvironment::Docker {
+                get_capabilities(fs)
+            } else {
+                None
+            },
         }
     }
 }
