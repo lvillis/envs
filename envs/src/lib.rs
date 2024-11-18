@@ -298,13 +298,16 @@ pub fn detect_virtualization(fs: &dyn FileSystem) -> VirtualizationPlatform {
         if cpuinfo.to_lowercase().contains("hypervisor") {
             // Further distinguish virtualization platforms by checking DMI info
             // Check /sys/class/dmi/id/product_name and /sys/class/dmi/id/sys_vendor
-            if let Ok(product_name) = fs.read_to_string(Path::new("/sys/class/dmi/id/product_name")) {
+            if let Ok(product_name) = fs.read_to_string(Path::new("/sys/class/dmi/id/product_name"))
+            {
                 let product_name_lower = product_name.to_lowercase();
                 if product_name_lower.contains("virtualbox") {
                     return VirtualizationPlatform::VirtualBox;
                 } else if product_name_lower.contains("vmware") {
                     return VirtualizationPlatform::VMware;
-                } else if product_name_lower.contains("hyper-v") || product_name_lower.contains("microsoft corporation") {
+                } else if product_name_lower.contains("hyper-v")
+                    || product_name_lower.contains("microsoft corporation")
+                {
                     return VirtualizationPlatform::HyperV;
                 } else if product_name_lower.contains("kvm") {
                     return VirtualizationPlatform::KVM;
@@ -353,9 +356,9 @@ pub fn get_environment_info() -> EnvironmentInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
     use std::env;
     use std::path::PathBuf;
-    use std::collections::HashMap;
 
     /// Mock filesystem for testing purposes.
     struct MockFileSystem {
@@ -387,7 +390,10 @@ mod tests {
             if let Some(content) = self.file_contents.get(path) {
                 Ok(content.clone())
             } else {
-                Err(std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"))
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "File not found",
+                ))
             }
         }
     }
@@ -482,9 +488,15 @@ mod tests {
         let mut mock_fs = MockFileSystem::new();
         // Ensure not running in container
         // Simulate /proc/cpuinfo containing "hypervisor"
-        mock_fs.add_file(PathBuf::from("/proc/cpuinfo"), "flags : hypervisor".to_string());
+        mock_fs.add_file(
+            PathBuf::from("/proc/cpuinfo"),
+            "flags : hypervisor".to_string(),
+        );
         // Simulate /sys/class/dmi/id/product_name containing "VirtualBox"
-        mock_fs.add_file(PathBuf::from("/sys/class/dmi/id/product_name"), "VirtualBox".to_string());
+        mock_fs.add_file(
+            PathBuf::from("/sys/class/dmi/id/product_name"),
+            "VirtualBox".to_string(),
+        );
 
         let virtualization = detect_virtualization(&mock_fs);
         assert_eq!(virtualization, VirtualizationPlatform::VirtualBox);
@@ -496,9 +508,15 @@ mod tests {
         let mut mock_fs = MockFileSystem::new();
         // Ensure not running in container
         // Simulate /proc/cpuinfo containing "hypervisor"
-        mock_fs.add_file(PathBuf::from("/proc/cpuinfo"), "flags : hypervisor".to_string());
+        mock_fs.add_file(
+            PathBuf::from("/proc/cpuinfo"),
+            "flags : hypervisor".to_string(),
+        );
         // Simulate /sys/class/dmi/id/sys_vendor containing "VMware"
-        mock_fs.add_file(PathBuf::from("/sys/class/dmi/id/sys_vendor"), "VMware, Inc.".to_string());
+        mock_fs.add_file(
+            PathBuf::from("/sys/class/dmi/id/sys_vendor"),
+            "VMware, Inc.".to_string(),
+        );
 
         let virtualization = detect_virtualization(&mock_fs);
         assert_eq!(virtualization, VirtualizationPlatform::VMware);
@@ -510,9 +528,15 @@ mod tests {
         let mut mock_fs = MockFileSystem::new();
         // Ensure not running in container
         // Simulate /proc/cpuinfo containing "hypervisor"
-        mock_fs.add_file(PathBuf::from("/proc/cpuinfo"), "flags : hypervisor".to_string());
+        mock_fs.add_file(
+            PathBuf::from("/proc/cpuinfo"),
+            "flags : hypervisor".to_string(),
+        );
         // Simulate /sys/class/dmi/id/sys_vendor containing "Microsoft Corporation" (Hyper-V)
-        mock_fs.add_file(PathBuf::from("/sys/class/dmi/id/sys_vendor"), "Microsoft Corporation".to_string());
+        mock_fs.add_file(
+            PathBuf::from("/sys/class/dmi/id/sys_vendor"),
+            "Microsoft Corporation".to_string(),
+        );
 
         let virtualization = detect_virtualization(&mock_fs);
         assert_eq!(virtualization, VirtualizationPlatform::HyperV);
@@ -524,9 +548,15 @@ mod tests {
         let mut mock_fs = MockFileSystem::new();
         // Ensure not running in container
         // Simulate /proc/cpuinfo containing "hypervisor"
-        mock_fs.add_file(PathBuf::from("/proc/cpuinfo"), "flags : hypervisor".to_string());
+        mock_fs.add_file(
+            PathBuf::from("/proc/cpuinfo"),
+            "flags : hypervisor".to_string(),
+        );
         // Simulate /sys/class/dmi/id/product_name containing "KVM"
-        mock_fs.add_file(PathBuf::from("/sys/class/dmi/id/product_name"), "KVM".to_string());
+        mock_fs.add_file(
+            PathBuf::from("/sys/class/dmi/id/product_name"),
+            "KVM".to_string(),
+        );
 
         let virtualization = detect_virtualization(&mock_fs);
         assert_eq!(virtualization, VirtualizationPlatform::KVM);
@@ -538,12 +568,21 @@ mod tests {
         let mut mock_fs = MockFileSystem::new();
         // Ensure not running in container
         // Simulate /proc/cpuinfo containing "hypervisor"
-        mock_fs.add_file(PathBuf::from("/proc/cpuinfo"), "flags : hypervisor".to_string());
+        mock_fs.add_file(
+            PathBuf::from("/proc/cpuinfo"),
+            "flags : hypervisor".to_string(),
+        );
         // Simulate /sys/class/dmi/id/sys_vendor containing unknown platform
-        mock_fs.add_file(PathBuf::from("/sys/class/dmi/id/sys_vendor"), "UnknownVendor".to_string());
+        mock_fs.add_file(
+            PathBuf::from("/sys/class/dmi/id/sys_vendor"),
+            "UnknownVendor".to_string(),
+        );
 
         let virtualization = detect_virtualization(&mock_fs);
-        assert_eq!(virtualization, VirtualizationPlatform::Other("UnknownVendor".to_string()));
+        assert_eq!(
+            virtualization,
+            VirtualizationPlatform::Other("UnknownVendor".to_string())
+        );
     }
 
     #[cfg(target_os = "linux")]
@@ -576,9 +615,15 @@ mod tests {
     fn test_get_environment_info_virtualization() {
         let mut mock_fs = MockFileSystem::new();
         // Simulate /proc/cpuinfo containing "hypervisor"
-        mock_fs.add_file(PathBuf::from("/proc/cpuinfo"), "flags : hypervisor".to_string());
+        mock_fs.add_file(
+            PathBuf::from("/proc/cpuinfo"),
+            "flags : hypervisor".to_string(),
+        );
         // Simulate /sys/class/dmi/id/product_name containing "VMware"
-        mock_fs.add_file(PathBuf::from("/sys/class/dmi/id/product_name"), "VMware".to_string());
+        mock_fs.add_file(
+            PathBuf::from("/sys/class/dmi/id/product_name"),
+            "VMware".to_string(),
+        );
 
         let info = get_environment_info_with_fs(&mock_fs);
         assert_eq!(info.os, OperatingSystem::Linux);
@@ -594,7 +639,10 @@ mod tests {
         // Simulate Docker environment
         mock_fs.add_file(PathBuf::from("/.dockerenv"), "".to_string());
         // Simulate CapEff in /proc/self/status (e.g., CapEff=00000000002c0000)
-        mock_fs.add_file(PathBuf::from("/proc/self/status"), "CapEff: 00000000002c0000\n".to_string());
+        mock_fs.add_file(
+            PathBuf::from("/proc/self/status"),
+            "CapEff: 00000000002c0000\n".to_string(),
+        );
 
         let capabilities = get_capabilities(&mock_fs).unwrap();
         let expected: HashSet<Capability> = vec![
@@ -602,8 +650,8 @@ mod tests {
             Capability::CAP_SYS_PTRACE,
             Capability::CAP_SYS_CHROOT,
         ]
-            .into_iter()
-            .collect();
+        .into_iter()
+        .collect();
         assert_eq!(capabilities.effective, expected);
     }
 

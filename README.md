@@ -2,7 +2,7 @@
 
 <h1 align=center><code>envs</code></h1>
 
-<p align=center>📦 A Rust Library for Environment Detection.</p>
+<p align=center>📦 A Rust library for detecting various system environments, including virtualization, containers, OS types, and more.</p>
 
 <div align=center>
   <a href="https://crates.io/crates/envs">
@@ -29,4 +29,12 @@ Add this to your `Cargo.toml`:
 [dependencies]
 envs = "0.1.0"
 ```
-    
+
+```rust
+use envs::get_environment_info;
+
+fn main() {
+    let info = get_environment_info();
+    println!("{:?}", info);
+}
+```
