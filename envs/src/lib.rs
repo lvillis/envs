@@ -601,25 +601,24 @@ mod tests {
 
     #[cfg(target_os = "linux")]
     #[test]
-    fn test_detect_virtualization_other() {
+    fn test_get_environment_info_virtualization() {
         let mut mock_fs = MockFileSystem::new();
-        // Ensure not running in container
         // Simulate /proc/cpuinfo containing "hypervisor"
         mock_fs.add_file(
             PathBuf::from("/proc/cpuinfo"),
             "flags : hypervisor".to_string(),
         );
-        // Simulate /sys/class/dmi/id/sys_vendor containing unknown platform
+        // Simulate /sys/class/dmi/id/product_name containing "VMware"
         mock_fs.add_file(
-            PathBuf::from("/sys/class/dmi/id/sys_vendor"),
-            "Standard PC (Q35 + ICH9, 2009)".to_string(),
+            PathBuf::from("/sys/class/dmi/id/product_name"),
+            "VMware".to_string(),
         );
 
-        let virtualization = detect_virtualization(&mock_fs);
-        assert_eq!(
-            virtualization,
-            VirtualizationPlatform::Other("Standard PC (Q35 + ICH9, 2009)".to_string())
-        );
+        let info = get_environment_info_with_fs(&mock_fs);
+        assert_eq!(info.os, OperatingSystem::Linux);
+        assert_eq!(info.container, ContainerEnvironment::None);
+        assert_eq!(info.virtualization, VirtualizationPlatform::VMware);
+        assert_eq!(info.capabilities, None);
     }
 
     #[cfg(target_os = "linux")]
