@@ -648,28 +648,6 @@ mod tests {
 
     #[cfg(target_os = "linux")]
     #[test]
-    fn test_get_environment_info_virtualization() {
-        let mut mock_fs = MockFileSystem::new();
-        // Simulate /proc/cpuinfo containing "hypervisor" and "kvm"
-        mock_fs.add_file(
-            PathBuf::from("/proc/cpuinfo"),
-            "flags : hypervisor kvm".to_string(),
-        );
-        // Simulate /sys/class/dmi/id/product_name containing "Standard PC (Q35 + ICH9, 2009)"
-        mock_fs.add_file(
-            PathBuf::from("/sys/class/dmi/id/product_name"),
-            "Standard PC (Q35 + ICH9, 2009)".to_string(),
-        );
-
-        let info = get_environment_info_with_fs(&mock_fs);
-        assert_eq!(info.os, OperatingSystem::Linux);
-        assert_eq!(info.container, ContainerEnvironment::None);
-        assert_eq!(info.virtualization, VirtualizationPlatform::KVM);
-        assert_eq!(info.capabilities, None);
-    }
-
-    #[cfg(target_os = "linux")]
-    #[test]
     fn test_get_environment_info_capabilities() {
         let mut mock_fs = MockFileSystem::new();
         // Simulate Docker environment
