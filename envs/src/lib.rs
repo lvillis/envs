@@ -1,7 +1,8 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::env;
 use std::fs;
 use std::path::Path;
+use std::fmt;
 
 /// Trait to abstract filesystem operations for easier testing.
 pub trait FileSystem {
@@ -31,6 +32,17 @@ pub enum OperatingSystem {
     Unknown(String),
 }
 
+impl fmt::Display for OperatingSystem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            OperatingSystem::Windows => write!(f, "Windows"),
+            OperatingSystem::Linux => write!(f, "Linux"),
+            OperatingSystem::MacOS => write!(f, "macOS"),
+            OperatingSystem::Unknown(name) => write!(f, "Unknown ({})", name),
+        }
+    }
+}
+
 /// Enum representing different container environments.
 #[derive(Debug, PartialEq, Eq)]
 pub enum ContainerEnvironment {
@@ -38,6 +50,17 @@ pub enum ContainerEnvironment {
     Kubernetes,
     Podman,
     None,
+}
+
+impl fmt::Display for ContainerEnvironment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ContainerEnvironment::Docker => write!(f, "Docker"),
+            ContainerEnvironment::Kubernetes => write!(f, "Kubernetes"),
+            ContainerEnvironment::Podman => write!(f, "Podman"),
+            ContainerEnvironment::None => write!(f, "None"),
+        }
+    }
 }
 
 /// Enum representing virtualization platforms.
@@ -51,8 +74,22 @@ pub enum VirtualizationPlatform {
     None,
 }
 
+impl fmt::Display for VirtualizationPlatform {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            VirtualizationPlatform::VMware => write!(f, "VMware"),
+            VirtualizationPlatform::VirtualBox => write!(f, "VirtualBox"),
+            VirtualizationPlatform::HyperV => write!(f, "Hyper-V"),
+            VirtualizationPlatform::KVM => write!(f, "KVM"),
+            VirtualizationPlatform::Other(name) => write!(f, "Other ({})", name),
+            VirtualizationPlatform::None => write!(f, "None"),
+        }
+    }
+}
+
 /// Enum representing specific capabilities.
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[allow(non_camel_case_types)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Capability {
     CAP_CHOWN,
     CAP_DAC_OVERRIDE,
@@ -89,6 +126,46 @@ pub enum Capability {
     Unknown(String),
 }
 
+impl fmt::Display for Capability {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Capability::CAP_CHOWN => write!(f, "CAP_CHOWN"),
+            Capability::CAP_DAC_OVERRIDE => write!(f, "CAP_DAC_OVERRIDE"),
+            Capability::CAP_DAC_READ_SEARCH => write!(f, "CAP_DAC_READ_SEARCH"),
+            Capability::CAP_FOWNER => write!(f, "CAP_FOWNER"),
+            Capability::CAP_FSETID => write!(f, "CAP_FSETID"),
+            Capability::CAP_KILL => write!(f, "CAP_KILL"),
+            Capability::CAP_SETGID => write!(f, "CAP_SETGID"),
+            Capability::CAP_SETUID => write!(f, "CAP_SETUID"),
+            Capability::CAP_SETPCAP => write!(f, "CAP_SETPCAP"),
+            Capability::CAP_LINUX_IMMUTABLE => write!(f, "CAP_LINUX_IMMUTABLE"),
+            Capability::CAP_NET_BIND_SERVICE => write!(f, "CAP_NET_BIND_SERVICE"),
+            Capability::CAP_NET_BROADCAST => write!(f, "CAP_NET_BROADCAST"),
+            Capability::CAP_NET_ADMIN => write!(f, "CAP_NET_ADMIN"),
+            Capability::CAP_NET_RAW => write!(f, "CAP_NET_RAW"),
+            Capability::CAP_IPC_LOCK => write!(f, "CAP_IPC_LOCK"),
+            Capability::CAP_IPC_OWNER => write!(f, "CAP_IPC_OWNER"),
+            Capability::CAP_SYS_MODULE => write!(f, "CAP_SYS_MODULE"),
+            Capability::CAP_SYS_RAWIO => write!(f, "CAP_SYS_RAWIO"),
+            Capability::CAP_SYS_CHROOT => write!(f, "CAP_SYS_CHROOT"),
+            Capability::CAP_SYS_PTRACE => write!(f, "CAP_SYS_PTRACE"),
+            Capability::CAP_SYS_PACCT => write!(f, "CAP_SYS_PACCT"),
+            Capability::CAP_SYS_ADMIN => write!(f, "CAP_SYS_ADMIN"),
+            Capability::CAP_SYS_BOOT => write!(f, "CAP_SYS_BOOT"),
+            Capability::CAP_SYS_NICE => write!(f, "CAP_SYS_NICE"),
+            Capability::CAP_SYS_RESOURCE => write!(f, "CAP_SYS_RESOURCE"),
+            Capability::CAP_SYS_TIME => write!(f, "CAP_SYS_TIME"),
+            Capability::CAP_SYS_TTY_CONFIG => write!(f, "CAP_SYS_TTY_CONFIG"),
+            Capability::CAP_MKNOD => write!(f, "CAP_MKNOD"),
+            Capability::CAP_LEASE => write!(f, "CAP_LEASE"),
+            Capability::CAP_AUDIT_WRITE => write!(f, "CAP_AUDIT_WRITE"),
+            Capability::CAP_AUDIT_CONTROL => write!(f, "CAP_AUDIT_CONTROL"),
+            Capability::CAP_SETFCAP => write!(f, "CAP_SETFCAP"),
+            Capability::Unknown(name) => write!(f, "Unknown ({})", name),
+        }
+    }
+}
+
 /// Struct holding the detected capabilities.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Capabilities {
@@ -123,11 +200,7 @@ fn is_kubernetes() -> bool {
 /// This function can be expanded to include more sophisticated detection mechanisms.
 fn get_container_runtime() -> Option<String> {
     // Example: Check for container runtime environment variable.
-    if let Ok(runtime) = env::var("CONTAINER_RUNTIME") {
-        return Some(runtime);
-    }
-
-    None
+    env::var("CONTAINER_RUNTIME").ok()
 }
 
 /// Detects the current container environment using the provided `FileSystem`.
@@ -162,91 +235,55 @@ pub fn detect_container(fs: &dyn FileSystem) -> ContainerEnvironment {
     ContainerEnvironment::None
 }
 
-/// Maps capability names to their respective bit positions.
-fn get_capability_map() -> HashMap<&'static str, u32> {
-    let mut map = HashMap::new();
-    map.insert("CAP_CHOWN", 0);
-    map.insert("CAP_DAC_OVERRIDE", 1);
-    map.insert("CAP_DAC_READ_SEARCH", 2);
-    map.insert("CAP_FOWNER", 3);
-    map.insert("CAP_FSETID", 4);
-    map.insert("CAP_KILL", 5);
-    map.insert("CAP_SETGID", 6);
-    map.insert("CAP_SETUID", 7);
-    map.insert("CAP_SETPCAP", 8);
-    map.insert("CAP_LINUX_IMMUTABLE", 9);
-    map.insert("CAP_NET_BIND_SERVICE", 10);
-    map.insert("CAP_NET_BROADCAST", 11);
-    map.insert("CAP_NET_ADMIN", 12);
-    map.insert("CAP_NET_RAW", 13);
-    map.insert("CAP_IPC_LOCK", 14);
-    map.insert("CAP_IPC_OWNER", 15);
-    map.insert("CAP_SYS_MODULE", 16);
-    map.insert("CAP_SYS_RAWIO", 17);
-    map.insert("CAP_SYS_CHROOT", 18);
-    map.insert("CAP_SYS_PTRACE", 19);
-    map.insert("CAP_SYS_PACCT", 20);
-    map.insert("CAP_SYS_ADMIN", 21);
-    map.insert("CAP_SYS_BOOT", 22);
-    map.insert("CAP_SYS_NICE", 23);
-    map.insert("CAP_SYS_RESOURCE", 24);
-    map.insert("CAP_SYS_TIME", 25);
-    map.insert("CAP_SYS_TTY_CONFIG", 26);
-    map.insert("CAP_MKNOD", 27);
-    map.insert("CAP_LEASE", 28);
-    map.insert("CAP_AUDIT_WRITE", 29);
-    map.insert("CAP_AUDIT_CONTROL", 30);
-    map.insert("CAP_SETFCAP", 31);
-    map
-}
+/// Capability bit position mapping
+const CAPABILITY_BIT_MAP: [Option<Capability>; 32] = [
+    Some(Capability::CAP_CHOWN),             // 0
+    Some(Capability::CAP_DAC_OVERRIDE),      // 1
+    Some(Capability::CAP_DAC_READ_SEARCH),   // 2
+    Some(Capability::CAP_FOWNER),            // 3
+    Some(Capability::CAP_FSETID),            // 4
+    Some(Capability::CAP_KILL),              // 5
+    Some(Capability::CAP_SETGID),            // 6
+    Some(Capability::CAP_SETUID),            // 7
+    Some(Capability::CAP_SETPCAP),           // 8
+    Some(Capability::CAP_LINUX_IMMUTABLE),   // 9
+    Some(Capability::CAP_NET_BIND_SERVICE),  // 10
+    Some(Capability::CAP_NET_BROADCAST),     // 11
+    Some(Capability::CAP_NET_ADMIN),         // 12
+    Some(Capability::CAP_NET_RAW),           // 13
+    Some(Capability::CAP_IPC_LOCK),          // 14
+    Some(Capability::CAP_IPC_OWNER),         // 15
+    Some(Capability::CAP_SYS_MODULE),        // 16
+    Some(Capability::CAP_SYS_RAWIO),         // 17
+    Some(Capability::CAP_SYS_CHROOT),        // 18
+    Some(Capability::CAP_SYS_PTRACE),        // 19
+    Some(Capability::CAP_SYS_PACCT),         // 20
+    Some(Capability::CAP_SYS_ADMIN),         // 21
+    Some(Capability::CAP_SYS_BOOT),          // 22
+    Some(Capability::CAP_SYS_NICE),          // 23
+    Some(Capability::CAP_SYS_RESOURCE),      // 24
+    Some(Capability::CAP_SYS_TIME),          // 25
+    Some(Capability::CAP_SYS_TTY_CONFIG),    // 26
+    Some(Capability::CAP_MKNOD),             // 27
+    Some(Capability::CAP_LEASE),             // 28
+    Some(Capability::CAP_AUDIT_WRITE),       // 29
+    Some(Capability::CAP_AUDIT_CONTROL),     // 30
+    Some(Capability::CAP_SETFCAP),           // 31
+];
 
 /// Parses the CapEff value and returns a list of enabled capabilities.
 fn parse_capabilities(cap_eff: u64) -> Vec<Capability> {
-    let capability_map = get_capability_map();
-    capability_map
-        .iter()
-        .filter_map(|(&cap, &bit)| {
-            if cap_eff & (1 << bit) != 0 {
-                match cap {
-                    "CAP_CHOWN" => Some(Capability::CAP_CHOWN),
-                    "CAP_DAC_OVERRIDE" => Some(Capability::CAP_DAC_OVERRIDE),
-                    "CAP_DAC_READ_SEARCH" => Some(Capability::CAP_DAC_READ_SEARCH),
-                    "CAP_FOWNER" => Some(Capability::CAP_FOWNER),
-                    "CAP_FSETID" => Some(Capability::CAP_FSETID),
-                    "CAP_KILL" => Some(Capability::CAP_KILL),
-                    "CAP_SETGID" => Some(Capability::CAP_SETGID),
-                    "CAP_SETUID" => Some(Capability::CAP_SETUID),
-                    "CAP_SETPCAP" => Some(Capability::CAP_SETPCAP),
-                    "CAP_LINUX_IMMUTABLE" => Some(Capability::CAP_LINUX_IMMUTABLE),
-                    "CAP_NET_BIND_SERVICE" => Some(Capability::CAP_NET_BIND_SERVICE),
-                    "CAP_NET_BROADCAST" => Some(Capability::CAP_NET_BROADCAST),
-                    "CAP_NET_ADMIN" => Some(Capability::CAP_NET_ADMIN),
-                    "CAP_NET_RAW" => Some(Capability::CAP_NET_RAW),
-                    "CAP_IPC_LOCK" => Some(Capability::CAP_IPC_LOCK),
-                    "CAP_IPC_OWNER" => Some(Capability::CAP_IPC_OWNER),
-                    "CAP_SYS_MODULE" => Some(Capability::CAP_SYS_MODULE),
-                    "CAP_SYS_RAWIO" => Some(Capability::CAP_SYS_RAWIO),
-                    "CAP_SYS_CHROOT" => Some(Capability::CAP_SYS_CHROOT),
-                    "CAP_SYS_PTRACE" => Some(Capability::CAP_SYS_PTRACE),
-                    "CAP_SYS_PACCT" => Some(Capability::CAP_SYS_PACCT),
-                    "CAP_SYS_ADMIN" => Some(Capability::CAP_SYS_ADMIN),
-                    "CAP_SYS_BOOT" => Some(Capability::CAP_SYS_BOOT),
-                    "CAP_SYS_NICE" => Some(Capability::CAP_SYS_NICE),
-                    "CAP_SYS_RESOURCE" => Some(Capability::CAP_SYS_RESOURCE),
-                    "CAP_SYS_TIME" => Some(Capability::CAP_SYS_TIME),
-                    "CAP_SYS_TTY_CONFIG" => Some(Capability::CAP_SYS_TTY_CONFIG),
-                    "CAP_MKNOD" => Some(Capability::CAP_MKNOD),
-                    "CAP_LEASE" => Some(Capability::CAP_LEASE),
-                    "CAP_AUDIT_WRITE" => Some(Capability::CAP_AUDIT_WRITE),
-                    "CAP_AUDIT_CONTROL" => Some(Capability::CAP_AUDIT_CONTROL),
-                    "CAP_SETFCAP" => Some(Capability::CAP_SETFCAP),
-                    _ => Some(Capability::Unknown(cap.to_string())),
-                }
+    let mut capabilities = Vec::new();
+    for bit in 0..32 {
+        if cap_eff & (1 << bit) != 0 {
+            if let Some(cap) = CAPABILITY_BIT_MAP[bit as usize].clone() {
+                capabilities.push(cap);
             } else {
-                None
+                capabilities.push(Capability::Unknown(format!("Bit {}", bit)));
             }
-        })
-        .collect()
+        }
+    }
+    capabilities
 }
 
 /// Reads and parses the CapEff field from /proc/self/status to determine effective capabilities.
@@ -293,44 +330,47 @@ pub fn detect_virtualization(fs: &dyn FileSystem) -> VirtualizationPlatform {
         return VirtualizationPlatform::None;
     }
 
-    // On Linux, check for hypervisor flag in /proc/cpuinfo
-    if let Ok(cpuinfo) = fs.read_to_string(Path::new("/proc/cpuinfo")) {
-        if cpuinfo.to_lowercase().contains("hypervisor") {
-            // Further distinguish virtualization platforms by checking DMI info
-            // Check /sys/class/dmi/id/product_name and /sys/class/dmi/id/sys_vendor
-            if let Ok(product_name) = fs.read_to_string(Path::new("/sys/class/dmi/id/product_name"))
-            {
-                let product_name_lower = product_name.to_lowercase();
-                if product_name_lower.contains("virtualbox") {
-                    return VirtualizationPlatform::VirtualBox;
-                } else if product_name_lower.contains("vmware") {
-                    return VirtualizationPlatform::VMware;
-                } else if product_name_lower.contains("hyper-v")
-                    || product_name_lower.contains("microsoft corporation")
-                {
-                    return VirtualizationPlatform::HyperV;
-                } else if product_name_lower.contains("kvm") {
-                    return VirtualizationPlatform::KVM;
-                } else {
-                    return VirtualizationPlatform::Other(product_name.trim().to_string());
-                }
-            }
+    let mut is_hypervisor = false;
 
-            if let Ok(sys_vendor) = fs.read_to_string(Path::new("/sys/class/dmi/id/sys_vendor")) {
-                let sys_vendor_lower = sys_vendor.to_lowercase();
-                if sys_vendor_lower.contains("virtualbox") {
+    // On Linux, check for hypervisor or kvm flag in /proc/cpuinfo
+    if let Ok(cpuinfo) = fs.read_to_string(Path::new("/proc/cpuinfo")) {
+        let cpuinfo_lower = cpuinfo.to_lowercase();
+        if cpuinfo_lower.contains("hypervisor") || cpuinfo_lower.contains("kvm") {
+            is_hypervisor = true;
+        }
+    }
+
+    // Additionally, check for /dev/kvm
+    if fs.file_exists(Path::new("/dev/kvm")) {
+        is_hypervisor = true;
+    }
+
+    if is_hypervisor {
+        // Further distinguish virtualization platforms by checking DMI info
+        for path in [
+            Path::new("/sys/class/dmi/id/product_name"),
+            Path::new("/sys/class/dmi/id/sys_vendor"),
+        ]
+            .iter()
+        {
+            if let Ok(content) = fs.read_to_string(path) {
+                let content_lower = content.to_lowercase();
+                if content_lower.contains("virtualbox") {
                     return VirtualizationPlatform::VirtualBox;
-                } else if sys_vendor_lower.contains("vmware") {
+                } else if content_lower.contains("vmware") {
                     return VirtualizationPlatform::VMware;
-                } else if sys_vendor_lower.contains("microsoft corporation") {
+                } else if content_lower.contains("hyper-v") || content_lower.contains("microsoft corporation") {
                     return VirtualizationPlatform::HyperV;
-                } else if sys_vendor_lower.contains("kvm") {
+                } else if content_lower.contains("kvm") || content_lower.contains("q35") || content_lower.contains("standard pc") {
                     return VirtualizationPlatform::KVM;
-                } else {
-                    return VirtualizationPlatform::Other(sys_vendor.trim().to_string());
+                } else if !content.trim().is_empty() {
+                    return VirtualizationPlatform::Other(content.trim().to_string());
                 }
             }
         }
+
+        // If no DMI info matches, but hypervisor flag is set, assume KVM
+        return VirtualizationPlatform::KVM;
     }
 
     VirtualizationPlatform::None
@@ -547,16 +587,13 @@ mod tests {
     fn test_detect_virtualization_kvm() {
         let mut mock_fs = MockFileSystem::new();
         // Ensure not running in container
-        // Simulate /proc/cpuinfo containing "hypervisor"
+        // Simulate /proc/cpuinfo containing "hypervisor" and "kvm"
         mock_fs.add_file(
             PathBuf::from("/proc/cpuinfo"),
-            "flags : hypervisor".to_string(),
+            "flags : hypervisor kvm".to_string(),
         );
-        // Simulate /sys/class/dmi/id/product_name containing "KVM"
-        mock_fs.add_file(
-            PathBuf::from("/sys/class/dmi/id/product_name"),
-            "KVM".to_string(),
-        );
+        // Simulate /dev/kvm exists
+        mock_fs.add_file(PathBuf::from("/dev/kvm"), "".to_string());
 
         let virtualization = detect_virtualization(&mock_fs);
         assert_eq!(virtualization, VirtualizationPlatform::KVM);
@@ -575,13 +612,13 @@ mod tests {
         // Simulate /sys/class/dmi/id/sys_vendor containing unknown platform
         mock_fs.add_file(
             PathBuf::from("/sys/class/dmi/id/sys_vendor"),
-            "UnknownVendor".to_string(),
+            "Standard PC (Q35 + ICH9, 2009)".to_string(),
         );
 
         let virtualization = detect_virtualization(&mock_fs);
         assert_eq!(
             virtualization,
-            VirtualizationPlatform::Other("UnknownVendor".to_string())
+            VirtualizationPlatform::Other("Standard PC (Q35 + ICH9, 2009)".to_string())
         );
     }
 
@@ -614,21 +651,21 @@ mod tests {
     #[test]
     fn test_get_environment_info_virtualization() {
         let mut mock_fs = MockFileSystem::new();
-        // Simulate /proc/cpuinfo containing "hypervisor"
+        // Simulate /proc/cpuinfo containing "hypervisor" and "kvm"
         mock_fs.add_file(
             PathBuf::from("/proc/cpuinfo"),
-            "flags : hypervisor".to_string(),
+            "flags : hypervisor kvm".to_string(),
         );
-        // Simulate /sys/class/dmi/id/product_name containing "VMware"
+        // Simulate /sys/class/dmi/id/product_name containing "Standard PC (Q35 + ICH9, 2009)"
         mock_fs.add_file(
             PathBuf::from("/sys/class/dmi/id/product_name"),
-            "VMware".to_string(),
+            "Standard PC (Q35 + ICH9, 2009)".to_string(),
         );
 
         let info = get_environment_info_with_fs(&mock_fs);
         assert_eq!(info.os, OperatingSystem::Linux);
         assert_eq!(info.container, ContainerEnvironment::None);
-        assert_eq!(info.virtualization, VirtualizationPlatform::VMware);
+        assert_eq!(info.virtualization, VirtualizationPlatform::KVM);
         assert_eq!(info.capabilities, None);
     }
 
@@ -650,8 +687,8 @@ mod tests {
             Capability::CAP_SYS_PTRACE,
             Capability::CAP_SYS_CHROOT,
         ]
-        .into_iter()
-        .collect();
+            .into_iter()
+            .collect();
         assert_eq!(capabilities.effective, expected);
     }
 
