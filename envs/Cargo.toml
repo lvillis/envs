@@ -1,7 +1,7 @@
 [package]
 name = "envs"
 description = "📦 A Rust library for detecting various system environments, including virtualization, containers, OS types, and more."
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 license = "MIT"
 authors = ["lvillis<lvillis@outlook.com>"]
@@ -9,5 +9,23 @@ repository = "https://github.com/lvillis/envs"
 homepage = "https://github.com/lvillis/envs"
 documentation = "https://github.com/lvillis/envs/blob/main/README.md"
 readme = "../README.md"
+exclude = [
+    "/docs/",
+    "/devtools/",
+    "/snap/",
+    "/tests/",
+    "/.config/",
+    "/.github/",
+    "/deb.asc",
+    "/deny.toml",
+    "/flake.*",
+    "/justfile",
+    "/powertest.yaml",
+    "/rust-toolchain.toml",
+    "/.envrc",
+    "/.gitignore",
+    "/.git-blame-ignore-revs",
+    "/.pre-commit-config-non-nix.yaml",
+]
 
 [dependencies]

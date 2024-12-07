@@ -8,7 +8,30 @@ authors = ["lvillis<lvillis@outlook.com>"]
 repository = "https://github.com/lvillis/envs"
 homepage = "https://github.com/lvillis/envs"
 documentation = "https://github.com/lvillis/envs/blob/main/README.md"
+exclude = [
+    "/docs/",
+    "/devtools/",
+    "/snap/",
+    "/tests/",
+    "/.config/",
+    "/.github/",
+    "/deb.asc",
+    "/deny.toml",
+    "/flake.*",
+    "/justfile",
+    "/powertest.yaml",
+    "/rust-toolchain.toml",
+    "/.envrc",
+    "/.gitignore",
+    "/.git-blame-ignore-revs",
+    "/.pre-commit-config-non-nix.yaml",
+]
+
+[[bin]]
+name = "envs"
+path = "src/main.rs"
 
 [dependencies]
-clap = { version = "4.5.20", default-features = false, features = ["std", "help", "usage", "suggestions", "derive"] }
 envs = { version = "0.2.0" }
+clap = { workspace = true }
+regex = { workspace = true }

@@ -5,10 +5,14 @@ members = [
     "envs-cli",
 ]
 
+[workspace.dependencies]
+clap = { version = "4.5.23", default-features = false, features = ["std", "help", "usage", "suggestions", "derive"] }
+regex = {version = "1.11.1"}
+
+[patch.crates-io]
+envs = { path = "envs" }
+
 [profile.release]
 lto = "thin"
 codegen-units = 1
 strip = true
-
-[patch.crates-io]
-envs = { path = "envs" }
