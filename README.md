@@ -27,7 +27,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-envs = "0.1.0"
+envs = "0.2.3"
 ```
 
 ```rust
