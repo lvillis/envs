@@ -18,9 +18,9 @@ codegen-units = 1
 strip = true
 
 [workspace.metadata.release]
-shared-version = "workspace"
+shared-version = true
 tag-prefix = ""
 tag-name = "{{prefix}}{{version}}"
-pre-release-commit-message = "chore: release {{crate_name}} version {{version}}"
 tag-message = "chore: release {{crate_name}} version {{version}}"
-pre-release-hook = ["git", "cliff", "-o", "CHANGELOG.md", "--tag", "{{version}}" ]
+pre-release-commit-message = "chore: release {{crate_name}} version {{version}}"
+pre-release-hook = ["git", "cliff", "--workdir", "../", "--output", "../CHANGELOG.md", "--tag", "{{version}}" ]
