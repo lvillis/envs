@@ -1,7 +1,7 @@
 [package]
 name = "envs-cli"
 description = "🛠️ A Rust CLI tool that outputs comprehensive system information using the envs library."
-version = "0.1.1"
+version = "0.2.3"
 edition = "2021"
 license = "MIT"
 authors = ["lvillis<lvillis@outlook.com>"]
@@ -10,21 +10,12 @@ homepage = "https://github.com/lvillis/envs"
 documentation = "https://github.com/lvillis/envs/blob/main/README.md"
 exclude = [
     "/docs/",
-    "/devtools/",
-    "/snap/",
     "/tests/",
     "/.config/",
     "/.github/",
-    "/deb.asc",
-    "/deny.toml",
-    "/flake.*",
-    "/justfile",
-    "/powertest.yaml",
+    "/.justfile",
     "/rust-toolchain.toml",
-    "/.envrc",
     "/.gitignore",
-    "/.git-blame-ignore-revs",
-    "/.pre-commit-config-non-nix.yaml",
 ]
 
 [[bin]]
